@@ -1,0 +1,17 @@
+useDynLib(glmm)
+
+export(bernoulli.glmm)
+export(glmm)
+export(poisson.glmm)
+export(summary.glmm)
+export(coef.glmm)
+export(varcomps)
+
+import(trust)
+import(mvtnorm)
+import(Matrix)
+
+S3method(print, summary.glmm)
+S3method(summary, glmm)
+S3method(coef,glmm)
+S3method(confint,glmm)
