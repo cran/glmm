@@ -85,13 +85,15 @@ function(fixed,random, varcomps.names,data, family.glmm, m,varcomps.equal, doPQL
 	#end figuring out how to interpret the formula
 
 	#make sure par.init has the right number of parameters and that the variance 
-	#components are positive to start
+	#components are positive to start. also skip pql bc using par.init instead
 	if(!is.null(par.init)){
 		nbeta<-ncol(x)
 		nbetaplusT<-nbeta+length(z)
 		if(length(par.init)!=nbetaplusT) stop("par.init is not the correct length. It should contain initial values for the fixed effects and variance components.")
 		vcs<-par.init[-(1:nbeta)]
 		if(any(vcs<=10^-9)) stop("Initial values for the variance components in par.init must be positive and sufficiently large (greater than 10^-9).")
+		doPQL<-FALSE
+		#if par.init is given, we want to use those not PQL
 	}
 	
 	#cache will hold some pql estimates and the importance sampling weights that wouldn't otherwise be returned
@@ -116,7 +118,11 @@ function(fixed,random, varcomps.names,data, family.glmm, m,varcomps.equal, doPQL
 	    nrandom<-unlist(nrand)
 	    totnrandom<-sum(nrandom)
 	    s.pql<-rep(0,totnrandom)
-		#if(!is.null(par.init)) then par.init is already specified by user
+		if(!is.null(par.init)){ #then par.init is already specified by user
+			beta.pql<-par.init[1:nbeta]
+			nu.pql<-par.init[-(1:nbeta)]
+			sigma.pql<-sqrt(nu.pql)
+		}
 		if(is.null(par.init)){
 	        sigma.pql<-nu.pql<-rep(1,length(mod.mcml$z))
 	        beta.pql<-rep(0,ncol(mod.mcml$x))
