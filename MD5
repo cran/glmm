@@ -1,4 +1,4 @@
-d7811d41c07b204a1e71ef2cb65a5b62 *DESCRIPTION
+08253e5341ae641f104db8e00477b1e9 *DESCRIPTION
 4d1fce564bae6dadd3ef521f12be9172 *NAMESPACE
 5f42b85cbbb1637ecda6f0c3b7df6def *R/addMats.R
 36b47784a153dc1e0dac305172582c98 *R/distRand.R
@@ -43,7 +43,7 @@ efdd41bab65b064e1c301f22f28f1219 *src/elval.c
 966c5a58e21495733034ac225e6ca816 *src/i.c
 9d342f06a9861e40241cc117aec54105 *src/m.c
 da203ca4e89875f551faa70ff5947dce *src/myheader.h
-3634bdcb560a82a6165e23e873e51750 *src/objfunc.c
+da156e70bce9beb4e7c61c24b3ba7877 *src/objfunc.c
 c3235f7aaa38f26c309414d8e095d1c2 *src/t.c
 d3348cc207fe94b9cd0f166e9e6d7d23 *tests/basicBHtest.R
 1bd6535c332b17ebf7740b3106c8ce3e *tests/basicBHtest.Rout.save
