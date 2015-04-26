@@ -83,6 +83,22 @@ function(object,...){
 	coefficients
 }
 
+
+vcov.glmm <-
+function(object,...){
+	mod<-object
+   	stopifnot(inherits(mod, "glmm"))
+	vcov <- -solve(mod$likelihood.hessian)
+
+	#get names for vcov matrix
+	rownames(vcov)<-colnames(vcov)<-rep(c("blah"),nrow(vcov))
+	nbeta<-length(mod$beta)
+	rownames(vcov)[1:nbeta] <- colnames(vcov)[1:nbeta] <- colnames(mod$x)
+	rownames(vcov)[-(1:nbeta)] <- colnames(vcov)[-(1:nbeta)] <- mod$varcomps.names
+
+	vcov
+}
+
 varcomps<-function(object,...){
 
 	mod<-object

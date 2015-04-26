@@ -65,13 +65,18 @@ The variable \texttt{Mate} tells us whether the pair of salamanders mated. The v
 
 The first R  command shown below gives us access to the \texttt{glmm} package and and all of its commands. The second line of code gives us access to the \texttt{salamander} data frame.  The next three commands help us begin to understand the data. We have four variables: \texttt{Mate}, \texttt{Cross}, \texttt{Female}, and \texttt{Male}. The summary shows us \texttt{Mate} is numeric, \texttt{Cross} is a factor with four levels, \texttt{Female} is a factor, and \texttt{Male} is a factor. 
 
-<<dataexplore,eval=TRUE,echo=TRUE>>=
+
+
+
+<<dataexplore>>=
 library(glmm)
 data(salamander)
 names(salamander)
 head(salamander)
 summary(salamander)
 @
+
+
 
 \section{Fitting the Model}\label{sec:fitmod}
 
@@ -96,6 +101,7 @@ Next, we specify our Monte Carlo sample size \texttt{m}. The general rule is the
 
 We put this all together in the following commands. Note that we set the seed so that we can have reproducible results. In other words, if you set your seed to the same number and type the exact command listed below, your results should be identical to those listed here. Additionally, the \texttt{proc.time} commands have been used to give you an idea of how quickly the model can be fit. The times shown here are from fitting a model on an ultrabook that cost 500 USD in 2013. 
 
+
 <<themodel,cache=TRUE>>=
 set.seed(1234) 
 ptm<-proc.time()
@@ -106,7 +112,8 @@ proc.time() - ptm
 @
 
 \subsection{Adding Optional Arguments}
-Additional arguments may be added for more control over the model fit.\\
+Additional arguments may be added for more control over the model fit. If you're an introductory user, go ahead and ignore this section.\\
+
 \subsubsection{Setting Variance Components Equal}
 By default, \texttt{glmm} assumes each variance component should be distinct. Suppose we want to set $\nu_F = \nu_M.$ Then we would add the argument \texttt{varcomps.equal} to indicate the equality. Since the list of random effects has two entries and we want those entries to share a variance component, we would set \texttt{varcomps.equal = c(1,1)}. In this scenario, we would only have one variance component, so we only need one entry in \texttt{varcomps.names}. Thus, the new command to fit this updated model with one variance component could be the following: 
 
@@ -235,6 +242,42 @@ confint(sal,level=.93,c("F"))
 
 Note that all confidence intervals are calculated using the observed Fisher information from the Monte Carlo likelihood approximation.\\
 
+\section{Estimating the Variance-Covariance Matrix}
+The variance-covariance matrix for the parameter estimates can be found using the \texttt{vcov} function. The only input is the model name.\\
+
+<<getvcov>>=
+(myvcov <- vcov(sal))
+@
+
+The variance-covariance matrix can be useful for some hypothesis testing. For example, suppose we want to test the hypotheses:
+\begin{align*}
+H_0: \; &\beta_{RR}-\beta_{WW}=0\\
+H_0: \; &\beta_{RR}-\beta_{WW} \neq 0.\\
+\end{align*}
+The Wald test statistic is
+\begin{align*}
+\dfrac{ \hat{\beta}_{RR} - \hat{\beta}_{WW} - 0}{\sqrt { \text{Var} \left(\hat{\beta}_{RR} - \hat{\beta}_{WW} \right )   }  } \sim N(0,1).
+\end{align*}
+To calculate
+\begin{align*}
+\text{Var} \left(\hat{\beta}_{RR} - \hat{\beta}_{WW} \right ) 
+= \text{Var} \left( \hat{\beta}_{RR}  \right)
++\text{Var} \left( \hat{\beta}_{WW}  \right)
+-2 \; \text{Cov} \left( \hat{\beta}_{RR} , \hat{\beta}_{WW}  \right)
+\end{align*}
+we use the variances and covariances from the variance-covariance matrix:
+<<denomVar>>=
+myvar <- myvcov[1,1] + myvcov[4,4] - 2* myvcov[1,4]
+SE <- sqrt(myvar)
+@
+Then the test statistic and its associated p-value can be calculated:
+<<pval>>=
+test.stat <- (coef(sal)[1] - coef(sal)[4]) / SE
+as.numeric(2 * pnorm(test.stat))
+@
+Therefore, we do not have evidence to reject $H_0: \beta_{RR}=\beta_{WW}$. The probability of two White Side salamanders mating is not significantly different from the probability of two Rough Butt salamanders mating. This makes sense, considering how close $\beta_{RR}$ and $\beta{WW}$ are.\\
+
+Similarly, we could do a Wald-style hypothesis test to find the two variance components $\nu_F$ and $\nu_M$ are not significantly different.
 
 \section{Accessing Additional Output}\label{sec:otherstuff}
 The model produced by \texttt{glmm} has information that is not displayed by the \texttt{summary} command. The \texttt{names} command helps us see what we can access.
@@ -250,6 +293,9 @@ Next is \texttt{trust.converged}, which tell us whether the \texttt{trust} funct
 Items 7 through 16 relate to the original function call. \texttt{mod.mcml} contains the model matrix for the fixed effects, a list of model matrices for the random effects, and the response vector. These are also displayed in \texttt{x}, \texttt{z}, and \texttt{y}, respectively. Then, the call (the original formula representations of the fixed and random effects) are contained in \texttt{fixedcall}, \texttt{randcall}, and \texttt{call}.\\
 
 The last argument is \texttt{debug}. If the model was fit with the default \texttt{debug = FALSE}, then this argument is just \texttt{FALSE}. If the model was fit with \texttt{debug = TRUE}, then \texttt{debug} contains a list of output for advanced users and programmers.
+
+
+
 % We now look at the \texttt{debug} output.
 %<<debugout>>=
 %out<-sal$debug

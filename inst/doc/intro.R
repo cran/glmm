@@ -1,7 +1,7 @@
 ## ----noname,echo=FALSE---------------------------------------------------
 #opts_chunk$set(comment=NA,background='white')
 
-## ----dataexplore,eval=TRUE,echo=TRUE-------------------------------------
+## ----dataexplore---------------------------------------------------------
 library(glmm)
 data(salamander)
 names(salamander)
@@ -50,6 +50,17 @@ confint(sal,level=.9,c("CrossR/R","CrossW/R"))
 ## ----confintFem----------------------------------------------------------
 confint(sal,level=.93,c(5))
 confint(sal,level=.93,c("F"))
+
+## ----getvcov-------------------------------------------------------------
+(myvcov <- vcov(sal))
+
+## ----denomVar------------------------------------------------------------
+myvar <- myvcov[1,1] + myvcov[4,4] - 2* myvcov[1,4]
+SE <- sqrt(myvar)
+
+## ----pval----------------------------------------------------------------
+test.stat <- (coef(sal)[1] - coef(sal)[4]) / SE
+as.numeric(2 * pnorm(test.stat))
 
 ## ----morestuff-----------------------------------------------------------
 names(sal)

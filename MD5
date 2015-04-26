@@ -1,5 +1,5 @@
-be4ed6f946f9ba11b924fb0b97673ad7 *DESCRIPTION
-4d1fce564bae6dadd3ef521f12be9172 *NAMESPACE
+c5160245d1fef0c4b7ea30cd24e43b79 *DESCRIPTION
+6c8db8e235145eac8e653be2d86cf839 *NAMESPACE
 5f42b85cbbb1637ecda6f0c3b7df6def *R/addMats.R
 36b47784a153dc1e0dac305172582c98 *R/distRand.R
 51d02d8b8707ce0d091ac84842412927 *R/genRand.R
@@ -10,7 +10,7 @@ d802c263b382d90c7c55d9adb519465c *R/getEk.R
 61e976cde7c68b87ba516482ee450a7c *R/m.R
 b82402efdcac419b42df14c88c480dba *R/objfun.R
 c6812e54f4b8a47e5a3d9e86dfa8eb60 *R/pql.R
-34b20ea7237f7f4af41e7e2afe56ddc4 *R/summary.mcla.R
+d3400c16285c9f1f547f24af4a532756 *R/summary.mcla.R
 afb605dc19cf26ca4986eecc30ca121e *build/vignette.rds
 cf1b3ede6bc3f19a75eec3b9d99ea2db *data/Booth2.rda
 11b203e170cce0ba762e4e200df1f545 *data/BoothHobert.rda
@@ -18,9 +18,9 @@ cf1b3ede6bc3f19a75eec3b9d99ea2db *data/Booth2.rda
 6a85879d207d3db2baa19f391f7f40e9 *data/cbpp2.rda
 18e8a87599b99b43dadc6e042bbac3a9 *data/murder.rda
 e132064943668919c2812b69578f0e8a *data/salamander.rda
-1d888db3f4bbb7c64d09096d06f4d0d4 *inst/doc/intro.R
-9a43da798d652ffc2a2eece9bbdaa686 *inst/doc/intro.Rnw
-711f7b8010bccc363816c948a056c7c8 *inst/doc/intro.pdf
+608ff4e9044d8651b2104f8abf19a7c1 *inst/doc/intro.R
+17529dbe0b7f9ce1c13399cb3d0c07b0 *inst/doc/intro.Rnw
+0f53dba544117f4b525f3943d9553e90 *inst/doc/intro.pdf
 65cd8a0fdcf0406aa8ec1f50e4b137e4 *man/Booth2.Rd
 78cb59f45bacc14af55aef6ba5fcdcbd *man/BoothHobert.Rd
 d2e03535eace0d47bc6c82153ca1d583 *man/bacteria.Rd
@@ -34,6 +34,7 @@ fd4cd112e00743f1f82423661af0a3c0 *man/glmm.Rd
 664ccb84e490de149af6178113cdd4dd *man/salamander.Rd
 74e0ab3a6103e2c79fee572bd80f45e7 *man/summary.glmm.Rd
 d8f7cae931ca5f631f550433a1412a97 *man/varcomps.glmm.Rd
+54cce626ad15f7167739e4aa0feb260d *man/vcov.glmm.Rd
 2a6f9e9e044a78154d3cfda5936d6f48 *src/Makevars
 05d0571cb318c7bbfdd2207641766cf1 *src/cp3.c
 def32ad0db92c9bb55a31fd3be5010ec *src/cpp3.c
@@ -71,4 +72,4 @@ eae7c8b1c340c37fa917b3193475691f *tests/salamFiniteDiffs.R
 bebf5b24993f77d9122abd0128bc5386 *tests/testt.R
 3b551df5b3ab0e8cc6b66e6baa01eba2 *tests/testt.Rout.save
 0583e4c2d172cb82015c6332e7196004 *vignettes/brref.bib
-9a43da798d652ffc2a2eece9bbdaa686 *vignettes/intro.Rnw
+17529dbe0b7f9ce1c13399cb3d0c07b0 *vignettes/intro.Rnw
