@@ -1,5 +1,5 @@
-summary.glmm <-
-function(object,...){
+## summary does all the calculations
+summary.glmm <- function(object,...){
     mod.mcml<-object
     stopifnot(inherits(mod.mcml, "glmm"))
 
@@ -19,9 +19,12 @@ function(object,...){
             warning(paste("estimated Fisher information matrix not positive",
                "definite, making all standard errors infinite"))
             all.ses <- rep(Inf, nrow(hessian))
-        }
-	else{	all.ses<-sqrt(diag(solve(-hessian)))}
+    }else{	
+		varcov <-vcov.glmm(mod.mcml)
+		all.ses<-sqrt(diag(varcov))
+	}
 	
+	#fixed effects table
 	beta.se<-all.ses[1:nbeta]
 	zval<-beta/beta.se
 	coefmat<-cbind(beta,beta.se,zval,2*pnorm(abs(zval),lower.tail=F))
@@ -29,6 +32,7 @@ function(object,...){
 	rownames(coefmat)<-colnames(mod.mcml$x)
 	coefficients<-coefmat[,1]
 	
+	#variance components table
 	nu<-mod.mcml$nu
 	nu.se<-all.ses[-(1:nbeta)]
 	nuzval<-nu/nu.se
@@ -37,11 +41,29 @@ function(object,...){
 	rownames(nucoefmat)<-mod.mcml$varcomps.names
 	link<-mod.mcml$family.glmm$link
 
-	
-	return(structure(list(x=x,y=y, z=z, coefmat=coefmat, fixedcall = fixedcall, randcall = randcall, coefficients = coefficients,
-family.mcml = mod.mcml$family.mcml, call = call, nucoefmat = nucoefmat, link = link, trust.converged = trust.converged),class="summary.glmm"))
+
+	return(structure(list(x=x,y=y, z=z, coefmat=coefmat, fixedcall = fixedcall, randcall = randcall, coefficients = coefficients, family.mcml = mod.mcml$family.mcml, call = call, nucoefmat = nucoefmat, link = link, trust.converged = trust.converged), class="summary.glmm"))
 }
 
+
+se <- function(object){
+    mod.mcml<-object
+    stopifnot(inherits(mod.mcml, "glmm"))
+	hessian<-mod.mcml$likelihood.hessian
+	if(det(hessian)==0) {
+            warning(paste("estimated Fisher information matrix not positive",
+               "definite, making all standard errors infinite"))
+            all.ses <- rep(Inf, nrow(hessian))
+    }else{	
+		varcov <-vcov.glmm(mod.mcml)
+		all.ses<-sqrt(diag(varcov))
+	}
+	
+	names(all.ses) <- c(colnames(mod.mcml$x), object$varcomps.names)
+	all.ses
+}
+
+## print.summary actually displays them
 print.summary.glmm <-
     function (x, digits = max(3, getOption("digits") - 3),
         signif.stars = getOption("show.signif.stars"), ...)
@@ -70,10 +92,12 @@ cat("Variance Components for Random Effects (P-values are one-tailed):")
         signif.stars = signif.stars, na.print = "NA", ...)
    cat("\n")
 
+
+
 }
 
 
-
+#just display the coefficients (the fixed effects estimates)
 coef.glmm <-
 function(object,...){
 	mod<-object
@@ -83,12 +107,13 @@ function(object,...){
 	coefficients
 }
 
-
+#variance covariance matrix
 vcov.glmm <-
 function(object,...){
 	mod<-object
    	stopifnot(inherits(mod, "glmm"))
-	vcov <- -solve(mod$likelihood.hessian)
+	vcov <- qr.solve(-mod$likelihood.hessian)
+
 
 	#get names for vcov matrix
 	rownames(vcov)<-colnames(vcov)<-rep(c("blah"),nrow(vcov))
@@ -99,6 +124,7 @@ function(object,...){
 	vcov
 }
 
+#just display the variance components
 varcomps<-function(object,...){
 
 	mod<-object
@@ -107,6 +133,7 @@ varcomps<-function(object,...){
 	coefficients
 }
 
+#confidence intervals
 confint.glmm<-function(object,parm,level=.95,...){
    	stopifnot(inherits(object, "glmm"))
 
@@ -128,7 +155,10 @@ confint.glmm<-function(object,parm,level=.95,...){
                "definite, making all standard errors infinite"))
             all.ses <- rep(Inf, nrow(hessian))
         }
-	else{	all.ses<-sqrt(diag(solve(-hessian)))}
+	else{	
+		varcov <-vcov.glmm(object)
+		all.ses<-sqrt(diag(varcov))
+		}
 	
 	names(all.ses)<-pnames
 	ci<-matrix(data=NA,nrow=length(parm),ncol=2)

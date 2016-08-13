@@ -1,11 +1,11 @@
 #include "myheader.h"
-void elval(double *Y,  int *nrowX, int *ncolX, double *eta, int *family, double *elval)
+void elval(double *Y,  int *nrowX, int *ncolX, double *eta, int *family, int *ntrials, double *elval)
 {
 	double *cumout=Calloc(1,double);
 	cumout[0]=0.0;
 
 	/*calling cum3, cp3, cpp3 will just change the doubles cumout, cpout, cppout  */
-	cum3(eta,nrowX,family,cumout);
+	cum3(eta,nrowX,family,ntrials, cumout);
 
 	/*calculate value of el: Y^T eta-c(eta)  */
 	int intone=1;

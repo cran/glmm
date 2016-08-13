@@ -5,14 +5,15 @@ Umat is myq by m matrix, one COLUMN of Umat used at a time. Umat must be the R m
 z is n by myq matrix
 pee is the vector of sampling proportions (usually 1/3, 1/3, 1/3)
 nps is the length of pee (3 for now, maybe more if imp sampling distrib changes)
+ntrials is a vec of ints with length equal to length(y)
 */
-void objfunc(double *y, double *Umat, int *myq, int *m, double *x, int *n, int *nbeta, double *beta, double *z, double *Dinvfornu, double *logdetDinvfornu, int *family_glmm, double *Dstarinv, double *logdetDstarinv, double *ustar, double *Sigmuhinv, double *logdetSigmuhinv, double *pee, int *nps, int *T, int *nrandom, int *meow, double *nu, int *zeta, double *tconst, double *v, double *value, double *gradient, double *hessian)
+void objfunc(double *y, double *Umat, int *myq, int *m, double *x, int *n, int *nbeta, double *beta, double *z, double *Dinvfornu, double *logdetDinvfornu, int *family_glmm, double *Dstarinv, double *logdetDstarinv, double *ustar, double *Sigmuhinv, double *logdetSigmuhinv, double *pee, int *nps, int *T, int *nrandom, int *meow, double *nu, int *zeta, double *tconst, double *v, int *ntrials, double *value, double *gradient, double *hessian)
 {
-	double *Uk = Calloc(*myq,double);
+	double *Uk = Calloc(*myq, double);
 	int Uindex = 0;
 
 	double db1 = 0.0;
-	double *double1=&db1; /*temp to hold info that will be put into lfuval*/
+	double *double1 = &db1; /*temp to hold info that will be put into lfuval*/
 
 	/* Calculate xbeta, needed to calculate eta for each Uk=U[k,] in R notation */
 	double *xbeta = Calloc(*n,double);
@@ -38,16 +39,16 @@ void objfunc(double *y, double *Umat, int *myq, int *m, double *x, int *n, int *
 
 		/* calculate eta for this value of Uk
 		first calculate ZUk*/
-		matvecmult(z,Uk,n,myq,zu);
+		matvecmult(z, Uk, n, myq, zu);
 
 		/* then add xbeta+zu to get current value of eta */
-		addvec(xbeta,zu,n,eta);
+		addvec(xbeta, zu, n, eta);
 
 		/*log f_theta(u_k) goes into lfuval*/
-		distRandGenC(Dinvfornu,logdetDinvfornu,myq,Uk,qzeros,&lfuval); 
+		distRandGenC(Dinvfornu, logdetDinvfornu, myq, Uk, qzeros, &lfuval); 
 
 		/* log f_theta(y|u_k) value goes into lfyuval */
-		elval(y,n,nbeta,eta,family_glmm,&lfyuval);
+		elval(y, n, nbeta, eta, family_glmm, ntrials, &lfyuval);
 
 		/* value of log f~_theta(u_k) 
 		first calculate value of log f~_theta(u_k) for 3 distribs used 
@@ -63,7 +64,7 @@ void objfunc(double *y, double *Umat, int *myq, int *m, double *x, int *n, int *
 		/*second piece is for N(ustar,Dstar)  */
 		distRandGenC(Dstarinv,logdetDstarinv, myq, Uk, ustar, double1);
 		lfutwidpieces[1] = *double1;
-		if(*double1>tempmax){tempmax=*double1;}
+		if(*double1 > tempmax){tempmax = *double1;}
 
 		/*third piece is for N(ustar,complicated var)  */
 		distRandGenC(Sigmuhinv,logdetSigmuhinv, myq, Uk, ustar, double1);
@@ -111,7 +112,7 @@ void objfunc(double *y, double *Umat, int *myq, int *m, double *x, int *n, int *
 
 /* done with value! */
 /* now going to do second loop, which calculates grad and hess */
-	int npar = *nbeta+*T;
+	int npar = *nbeta + *T;
 	double *lfugradient = Calloc(*T, double);
 	double *lfuhess = Calloc((*T)*(*T), double);
 	double *lfyugradient = Calloc(*nbeta, double);
@@ -127,7 +128,7 @@ void objfunc(double *y, double *Umat, int *myq, int *m, double *x, int *n, int *
 	int intone = 1;
 
 	double *lobster = Calloc(npar*npar, double);
-	int lfyuindex=0, lfuindex=0, matindex=0;
+	int lfyuindex = 0, lfuindex = 0, matindex = 0;
 
 	for(int k = 0; k<*m; k++){
 		/*start by getting Uk  */
@@ -147,7 +148,7 @@ void objfunc(double *y, double *Umat, int *myq, int *m, double *x, int *n, int *
 		distRand3C(nu, qzeros, T, nrandom, meow, Uk, lfugradient, lfuhess);
 
 		/* calculate gradient and hessian log f_theta(y|u_k) */
-		elGH(y, x, n, nbeta, eta, family_glmm, lfyugradient, lfyuhess);
+		elGH(y, x, n, nbeta, eta, family_glmm, ntrials, lfyugradient, lfyuhess);
 
 		/* calculate gradient */
 		Gindex=0;
@@ -157,25 +158,55 @@ void objfunc(double *y, double *Umat, int *myq, int *m, double *x, int *n, int *
 			Gindex++;
 		}
 		for(int i = 0; i<*T; i++){
-			gradient[Gindex]+=lfugradient[i]*v[k];
+			gradient[Gindex]+= lfugradient[i]*v[k];
 			Gindex++;
 		}
 
-	/* Calculate hessian. 3 parts: panda, lobster, and matrix G t(G). 
-	Panda is \sum_{k=1}^m (\nabla log f_\theta (uk,y))(\nabla log f_\theta (uk,y))' v(uk,y)
+	} /* ends FIRST k loop */
+
+	/*	reset counters to 0*/
+	Uindex = 0;	
+	Gindex = 0;
+	lfyuindex = 0;
+	lfuindex = 0;
+	matindex = 0;
+
+	/* begins SECOND k loop */
+	for(int k = 0; k<*m; k++){
+		/*start by getting Uk  */
+		for(int i = 0; i<*myq; i++){
+			Uk[i] = Umat[Uindex];
+			Uindex++;
+		}
+
+		/* calculate eta for this value of Uk
+		first calculate ZUk*/
+		matvecmult(z, Uk, n, myq, zu);
+
+		/* then add xbeta+zu to get current value of eta */
+		addvec(xbeta, zu, n, eta);
+
+		/* calculate lfu gradient and hessian */
+		distRand3C(nu, qzeros, T, nrandom, meow, Uk, lfugradient, lfuhess);
+
+		/* calculate gradient and hessian log f_theta(y|u_k) */
+		elGH(y, x, n, nbeta, eta, family_glmm, ntrials, lfyugradient, lfyuhess);
+
+	/* Calculate hessian. 2 parts: panda, lobster. 
+	Panda is \sum_{k=1}^m pandabit1 times pandabit2 where
+	pandabit1 is (\nabla log f_\theta (uk,y)-\nabla objfun)
+	and pandabit2 is (\nabla log f_\theta (uk,y)-\nabla objfun)' v(uk,y)
 	Lobster is \sum_{k=1}^m \nabla^2 log f_\theta(uk,y) v(uk,y)  
-	panda and lobster are calculated in a loop, but G t(G) will be calc outside of k-loop.
-		First calculate panda. For each k, add on pandabit1 %*% t(pandabit2) 
-		where pandabit2=pandabit1* v[k]. */
+	 */
 		Gindex = 0;
 		for(int i = 0; i<*nbeta; i++){
-			pandabit1[Gindex] = lfyugradient[i];
-			pandabit2[Gindex] = lfyugradient[i]*v[k];
+			pandabit1[Gindex] = lfyugradient[i] - gradient[Gindex];
+			pandabit2[Gindex] = (lfyugradient[i] - gradient[Gindex])*v[k];
 			Gindex++;
 		}
 		for(int i = 0; i<*T; i++){
-			pandabit1[Gindex] = lfugradient[i];
-			pandabit2[Gindex] = lfugradient[i]*v[k];
+			pandabit1[Gindex] = lfugradient[i] - gradient[Gindex];
+			pandabit2[Gindex] = (lfugradient[i] - gradient[Gindex])*v[k];
 			Gindex++;
 		}
 		/* now have pandabits so can calc what we'll add on this iteration*/
@@ -192,7 +223,7 @@ void objfunc(double *y, double *Umat, int *myq, int *m, double *x, int *n, int *
 		matindex = 0;
 		for(int i = 0; i<*nbeta; i++){ /* for first nbeta columns of lobster */
 			for(int j = 0; j<*nbeta; j++){
-				lobster[matindex]+=lfyuhess[lfyuindex]*v[k];
+				lobster[matindex]+= lfyuhess[lfyuindex]*v[k];
 				matindex++;
 				lfyuindex++;
 			}
@@ -208,9 +239,9 @@ void objfunc(double *y, double *Umat, int *myq, int *m, double *x, int *n, int *
 				lobster[matindex]+= lfuhess[lfuindex]*v[k];
 				matindex++;
 				lfuindex++;
-			}
-		}
-	}
+			} /* ends j loop */
+		}/* ends i loop */
+	} /* ends SECOND k loop */
 
 	Free(pandatemp);
 	Free(pandabit1);
@@ -225,16 +256,12 @@ void objfunc(double *y, double *Umat, int *myq, int *m, double *x, int *n, int *
 	Free(lfyuhess);
 	Free(qzeros);
 
-	double *GtG = Calloc((npar*npar), double);
-	matmatmult(gradient, gradient, &npar, &intone, &npar, GtG);
-
-	/* finally, hessian = lobster+ panda - gradient t(gradient) */
+	/* finally, hessian = lobster + panda  */
 	for(int i = 0; i<(npar*npar); i++){
-		hessian[i] = lobster[i] + panda[i] - GtG[i];
+		hessian[i] = lobster[i] + panda[i] ;
 	}
 
 	Free(panda);
-	Free(GtG);
 	Free(lobster);
 
 }

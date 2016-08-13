@@ -16,12 +16,6 @@ sal <- glmm(Mate ~ 0 + Cross, random = list(~ 0 + Female,
 family.glmm = bernoulli.glmm, m = 10^4, debug = TRUE)
 proc.time() - ptm
 
-## ----othermodel,eval=FALSE-----------------------------------------------
-#  sal <- glmm(Mate ~ 0 + Cross, random = list(~ 0 + Female,
-#  ~ 0 + Male), varcomps.equal = c( 1, 1), varcomps.names =
-#  c("Only Varcomp"), data = salamander, family.glmm =
-#  bernoulli.glmm, m = 10^4, debug = TRUE)
-
 ## ----summary-------------------------------------------------------------
 summary(sal)
 
@@ -51,6 +45,12 @@ confint(sal,level=.9,c("CrossR/R","CrossW/R"))
 confint(sal,level=.93,c(5))
 confint(sal,level=.93,c("F"))
 
+## ----getmcse-------------------------------------------------------------
+mcse(sal)
+
+## ----comparese-----------------------------------------------------------
+se(sal)
+
 ## ----getvcov-------------------------------------------------------------
 (myvcov <- vcov(sal))
 
@@ -64,4 +64,10 @@ as.numeric(2 * pnorm(test.stat))
 
 ## ----morestuff-----------------------------------------------------------
 names(sal)
+
+## ----othermodel,eval=FALSE-----------------------------------------------
+#  sal <- glmm(Mate ~ 0 + Cross, random = list(~ 0 + Female,
+#  ~ 0 + Male), varcomps.equal = c( 1, 1), varcomps.names =
+#  c("Only Varcomp"), data = salamander, family.glmm =
+#  bernoulli.glmm, m = 10^4, debug = TRUE)
 
