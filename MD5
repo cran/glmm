@@ -1,7 +1,7 @@
-3c0cb2b887b12e369a361f444c74754a *DESCRIPTION
-b0e39991101459653e9033d2869ce89c *NAMESPACE
+3ad8e8b05913a6b1d49a1db69666ed45 *DESCRIPTION
+b52e202d8eb666cc1553468317df2f76 *NAMESPACE
 5f42b85cbbb1637ecda6f0c3b7df6def *R/addMats.R
-36b47784a153dc1e0dac305172582c98 *R/distRand.R
+747f566ddef73ffe1b35f52af02c04ee *R/distRand.R
 51d02d8b8707ce0d091ac84842412927 *R/genRand.R
 d802c263b382d90c7c55d9adb519465c *R/getEk.R
 7725a77462826c3f1d7512cbf60ace76 *R/getFamily.R
@@ -12,7 +12,7 @@ b221dc63bdc25230d994a1aff76cda39 *R/mcse.R
 c522eed9cb6ba4078c2baa97a02fb30f *R/objfun.R
 041805b972a41ac44a1d091ea8e81cef *R/pql.R
 1640b9d4490d8baa19c2c64bf13e6159 *R/summary.mcla.R
-00a17b4245e0823d0a67e69d56813995 *build/vignette.rds
+847ac908dfcbfcc877094cb016b846dd *build/vignette.rds
 cf1b3ede6bc3f19a75eec3b9d99ea2db *data/Booth2.rda
 11b203e170cce0ba762e4e200df1f545 *data/BoothHobert.rda
 4cdb0f725d20648a8016faab9dc88d9e *data/bacteria.rda
@@ -20,8 +20,8 @@ cf1b3ede6bc3f19a75eec3b9d99ea2db *data/Booth2.rda
 18e8a87599b99b43dadc6e042bbac3a9 *data/murder.rda
 e132064943668919c2812b69578f0e8a *data/salamander.rda
 9e58780f7a20a0bf85b1594553a5c7b0 *inst/doc/intro.R
-b0839bf99a7c8ee09c0708990477fc00 *inst/doc/intro.Rnw
-743bb83b5c4d1c0fd168a0346fe89afb *inst/doc/intro.pdf
+ec02ffe8bac79c5dd90f031de178e114 *inst/doc/intro.Rnw
+b3b91703bb16cb478b31b6ce052240b1 *inst/doc/intro.pdf
 65cd8a0fdcf0406aa8ec1f50e4b137e4 *man/Booth2.Rd
 78cb59f45bacc14af55aef6ba5fcdcbd *man/BoothHobert.Rd
 d2e03535eace0d47bc6c82153ca1d583 *man/bacteria.Rd
@@ -49,6 +49,7 @@ d381405b0d0bed65eee853c62aa197a3 *src/cum3.c
 396aac443e80c35db2f78a3cccfb2806 *src/elGH.c
 924ca2a38b45d8cd71f5ef2b81247b7d *src/elc.c
 80d210f047dd90c1f630652331dd0905 *src/elval.c
+243a7e271dbfb04855c41c4e687e4dac *src/glmm_init.c
 966c5a58e21495733034ac225e6ca816 *src/i.c
 9d342f06a9861e40241cc117aec54105 *src/m.c
 e440b7da575432e064bd9d2ec3f00969 *src/mcse.c
@@ -78,10 +79,10 @@ b9dc1f25cf97a2f45e687b19c70af812 *tests/mcseTest.R
 f55a8e11cf2c6db15c5d5e29f995d5fe *tests/objfunTest.R
 7103db821839ec9e0911a035ea0500f9 *tests/objfunTest.Rout.save
 1db91fda5b804b0d9517a35083ff8c3c *tests/salamFiniteDiffs.R
-d6e10c0d68a5168ecc7e715392bb9b31 *tests/salamFiniteDiffs.Rout.save
+5194d36024e743a0e7dde0c00b70b3f6 *tests/salamFiniteDiffs.Rout.save
 ae8c6daec0fe04977567fe9a43eb8a88 *tests/testpiecesBH.R
 78e709268796e688194714b56714e147 *tests/testpiecesBH.Rout.save
 bebf5b24993f77d9122abd0128bc5386 *tests/testt.R
 3b551df5b3ab0e8cc6b66e6baa01eba2 *tests/testt.Rout.save
 0583e4c2d172cb82015c6332e7196004 *vignettes/brref.bib
-b0839bf99a7c8ee09c0708990477fc00 *vignettes/intro.Rnw
+ec02ffe8bac79c5dd90f031de178e114 *vignettes/intro.Rnw
