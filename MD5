@@ -1,5 +1,5 @@
-3ad8e8b05913a6b1d49a1db69666ed45 *DESCRIPTION
-b52e202d8eb666cc1553468317df2f76 *NAMESPACE
+cd3fdd7b4bbc7df83189ebfb8bd3f446 *DESCRIPTION
+a34685b54066694ef78425338300e39b *NAMESPACE
 5f42b85cbbb1637ecda6f0c3b7df6def *R/addMats.R
 747f566ddef73ffe1b35f52af02c04ee *R/distRand.R
 51d02d8b8707ce0d091ac84842412927 *R/genRand.R
@@ -11,7 +11,7 @@ d802c263b382d90c7c55d9adb519465c *R/getEk.R
 b221dc63bdc25230d994a1aff76cda39 *R/mcse.R
 c522eed9cb6ba4078c2baa97a02fb30f *R/objfun.R
 041805b972a41ac44a1d091ea8e81cef *R/pql.R
-1640b9d4490d8baa19c2c64bf13e6159 *R/summary.mcla.R
+b7c44a53d38b72a8d68ee77c0854e52d *R/summary.mcla.R
 847ac908dfcbfcc877094cb016b846dd *build/vignette.rds
 cf1b3ede6bc3f19a75eec3b9d99ea2db *data/Booth2.rda
 11b203e170cce0ba762e4e200df1f545 *data/BoothHobert.rda
@@ -21,7 +21,7 @@ cf1b3ede6bc3f19a75eec3b9d99ea2db *data/Booth2.rda
 e132064943668919c2812b69578f0e8a *data/salamander.rda
 9e58780f7a20a0bf85b1594553a5c7b0 *inst/doc/intro.R
 ec02ffe8bac79c5dd90f031de178e114 *inst/doc/intro.Rnw
-b3b91703bb16cb478b31b6ce052240b1 *inst/doc/intro.pdf
+42925e7774ca812f47ae847d881dd2f9 *inst/doc/intro.pdf
 65cd8a0fdcf0406aa8ec1f50e4b137e4 *man/Booth2.Rd
 78cb59f45bacc14af55aef6ba5fcdcbd *man/BoothHobert.Rd
 d2e03535eace0d47bc6c82153ca1d583 *man/bacteria.Rd
@@ -30,7 +30,8 @@ b23986ff80955635f8820061a08ec5bd *man/bernoulli.glmm.Rd
 20627e0e0d92657a7a058089d5681e58 *man/cbpp2.Rd
 4ad728721f71e3c63496548ba6a0245d *man/coef.glmm.Rd
 a1aa03cef3246316c769cd4272e38df9 *man/confint.glmm.Rd
-76ed48f7f9f2d9b7bc4af5a252549897 *man/glmm.Rd
+8eb833b961d30b8354c7ef6f71e381f8 *man/glmm.Rd
+808ab1af31c50597ae923eb8a035b563 *man/logLik.Rd
 b0286359de68b27e85a6821a1e888464 *man/mcse.Rd
 5bf598b39bb1ae5f0fd6677ccb1b1441 *man/mcvcov.Rd
 9dff1a3e8c60ae91a19b0969409fdc31 *man/murder.Rd
