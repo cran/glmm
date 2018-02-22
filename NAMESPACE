@@ -1,6 +1,5 @@
 useDynLib(glmm, .registration = TRUE, .fixes = "C_")
 
-
 export(glmm)
 export(bernoulli.glmm)
 export(poisson.glmm)
@@ -17,6 +16,7 @@ export(logLik.glmm)
 import(trust)
 import(mvtnorm)
 import(Matrix)
+import(digest)
 
 importFrom(stats, coef, pnorm, qnorm, rnorm, lm, model.matrix, model.response, runif, optim, printCoefmat)
 
