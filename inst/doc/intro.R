@@ -10,11 +10,11 @@ summary(salamander)
 
 ## ----themodel,cache=TRUE-------------------------------------------------
 set.seed(1234) 
-ptm<-proc.time()
+clust <- makeCluster(2)
 sal <- glmm(Mate ~ 0 + Cross, random = list(~ 0 + Female, 
 ~ 0 + Male), varcomps.names = c("F", "M"), data = salamander, 
-family.glmm = bernoulli.glmm, m = 10^4, debug = TRUE)
-proc.time() - ptm
+family.glmm = bernoulli.glmm, m = 10^4, debug = TRUE, cluster = clust)
+stopCluster(clust)
 
 ## ----summary-------------------------------------------------------------
 summary(sal)
@@ -69,5 +69,5 @@ names(sal)
 #  sal <- glmm(Mate ~ 0 + Cross, random = list(~ 0 + Female,
 #  ~ 0 + Male), varcomps.equal = c( 1, 1), varcomps.names =
 #  c("Only Varcomp"), data = salamander, family.glmm =
-#  bernoulli.glmm, m = 10^4, debug = TRUE)
+#  bernoulli.glmm, m = 10^4, debug = TRUE, cluster = clust)
 

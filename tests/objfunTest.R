@@ -1,63 +1,113 @@
 #check objfun using finite differences
 library(glmm)
 data(BoothHobert)
+clust <- makeCluster(2)
 set.seed(1234)
 out<-glmm(y~0+x1,list(y~0+z1),varcomps.names=c("z1"),data=BoothHobert,
-family.glmm=bernoulli.glmm,m=50,doPQL=FALSE,debug=TRUE)
-mod.mcml<-out$mod.mcml
+family.glmm=bernoulli.glmm,m=50,doPQL=FALSE,debug=TRUE, cluster=clust)
+vars <- new.env(parent = emptyenv())
 debug<-out$debug
-nu.pql<-debug$nu.pql
-nu.pql
+vars$nu.pql<-debug$nu.pql
 beta.pql<-debug$beta.pql
-beta.pql
-family.glmm<-out$family.glmm
-umat<-debug$umat
-u.pql<-debug$u.star
-m1<-debug$m1
-ntrials<-1
+vars$family.glmm<-out$family.glmm
+vars$umat<-debug$umat
+vars$newm <- nrow(vars$umat)
+vars$u.star<-debug$u.star
+vars$ntrials<-1
+D.star.inv <- Dstarnotsparse <- vars$D.star <- as.matrix(debug$D.star)
 
-par<-c(6,1.5)
-del<-rep(10^-8,2)
 
-objfun<-glmm:::objfun
+vars$m1 <- debug$m1
+m2 <- debug$m2
+m3 <- debug$m3
+
+vars$zeta <- 5
+
+vars$cl <- out$cluster
+registerDoParallel(vars$cl)                   #making cluster usable with foreach
+vars$no_cores <- length(vars$cl)
+
+vars$mod.mcml<-out$mod.mcml
+
 getEk<-glmm:::getEk
 addVecs<-glmm:::addVecs
+genRand<-glmm:::genRand
 
-#need to get D*
-eek<-getEk(mod.mcml$z)
-Aks<-Map("*",eek,nu.pql)
-D.star<-addVecs(Aks) 
-D.star<-diag(D.star)
-D.star.inv<-solve(D.star)
+simulate <- function(vars, Dstarnotsparse, m2, m3, beta.pql, D.star.inv){
+  #generate m1 from t(0,D*)
+  if(vars$m1>0) genData<-rmvt(ceiling(vars$m1/vars$no_cores),sigma=Dstarnotsparse,df=vars$zeta,type=c("shifted"))
+  if(vars$m1==0) genData<-NULL		
+  
+  #generate m2 from N(u*,D*)
+  if(m2>0) genData2<-genRand(vars$u.star,vars$D.star,ceiling(m2/vars$no_cores))
+  if(m2==0) genData2<-NULL
+  
+  
+  #generate m3 from N(u*,(Z'c''(Xbeta*+zu*)Z+D*^{-1})^-1)
+  if(m3>0){
+    Z=do.call(cbind,vars$mod.mcml$z)
+    eta.star<-as.vector(vars$mod.mcml$x%*%beta.pql+Z%*%vars$u.star)
+    if(vars$family.glmm$family.glmm=="bernoulli.glmm") {cdouble<-vars$family.glmm$cpp(eta.star)}
+    if(vars$family.glmm$family.glmm=="poisson.glmm"){cdouble<-vars$family.glmm$cpp(eta.star)}
+    if(vars$family.glmm$family.glmm=="binomial.glmm"){cdouble<-vars$family.glmm$cpp(eta.star, vars$ntrials)}
+    #still a vector
+    cdouble<-Diagonal(length(cdouble),cdouble)
+    Sigmuh.inv<- t(Z)%*%cdouble%*%Z+D.star.inv
+    Sigmuh<-solve(Sigmuh.inv)
+    genData3<-genRand(vars$u.star,Sigmuh,ceiling(m3/vars$no_cores))
+  }
+  if(m3==0) genData3<-NULL
+  
+  #	#these are from distribution based on data
+  #	if(distrib=="tee")genData<-genRand(sigma.gen,s.pql,mod.mcml$z,m1,distrib="tee",gamm)
+  #	if(distrib=="normal")genData<-genRand(sigma.pql,s.pql,mod.mcml$z,m1,distrib="normal",gamm)
+  #	#these are from standard normal
+  #	ones<-rep(1,length(sigma.pql))
+  #	zeros<-rep(0,length(s.pql))
+  #	genData2<-genRand(ones,zeros,mod.mcml$z,m2,distrib="normal",gamm)
+  
+  umat<-rbind(genData,genData2,genData3)
+  m <- nrow(umat)
+  list(umat=umat, m=m, Sigmuh.inv=Sigmuh.inv)
+}
 
+clusterSetRNGStream(vars$cl, 1234)
 
-#need to also recreate the variance matrix of last imp sampling distribution
-Z=do.call(cbind,mod.mcml$z)
-eta.star<-as.vector(mod.mcml$x%*%beta.pql+Z%*%u.pql)
-cdouble<-bernoulli.glmm()$cpp(eta.star) #still a vector
-cdouble<-diag(cdouble)
-Sigmuh.inv<- t(Z)%*%cdouble%*%Z+D.star.inv
-Sigmuh<-solve(Sigmuh.inv)
+clusterExport(vars$cl, c("vars", "Dstarnotsparse", "m2", "m3", "beta.pql", "D.star.inv", "simulate", "genRand"), envir = environment())     #installing variables on each core
+noprint <- clusterEvalQ(vars$cl, umatparams <- simulate(vars=vars, Dstarnotsparse=Dstarnotsparse, m2=m2, m3=m3, beta.pql=beta.pql, D.star.inv=D.star.inv))
 
-p1=p2=p3=1/3
-zeta=5
+vars$nbeta <- 1
+
+vars$p1=vars$p2=vars$p3=1/3
+
+par<-c(6,1.5)
+del<-rep(10^-9,2)
+
+objfun<-glmm:::objfun
+
+umats <- clusterEvalQ(vars$cl, umatparams$umat)
+umat <- Reduce(rbind, umats)
+
+Sigmuh.invs <- clusterEvalQ(vars$cl, umatparams$Sigmuh.inv)
+Sigmuh.inv <- Sigmuh.invs[[1]]
+Sigmuh <- solve(Sigmuh.inv)
 
 # define a few things that will be used for finite differences
-lth<-objfun(par=par, nbeta=1, nu.pql=nu.pql, umat=umat, u.star=u.pql, mod.mcml=mod.mcml, family.glmm=family.glmm,p1=p1,p2=p2,p3=p3,m1=m1, Sigmuh=Sigmuh, D.star=D.star, Sigmuh.inv= Sigmuh.inv, zeta=zeta, ntrials=ntrials)
-lthdel<-objfun(par=par+del, nbeta=1, nu.pql=nu.pql, umat=umat, u.star=u.pql, mod.mcml=mod.mcml, family.glmm=family.glmm,p1=p1,p2=p2,p3=p3,m1=m1, Sigmuh=Sigmuh, D.star=D.star, Sigmuh.inv=Sigmuh.inv, zeta=zeta, ntrials=ntrials)
+lth<-objfun(par=par, vars=vars)
+lthdel<-objfun(par=par+del, vars=vars)
 
 all.equal(as.vector(lth$gradient%*%del),lthdel$value-lth$value)
 all.equal(as.vector(lth$hessian%*%del),lthdel$gradient-lth$gradient)
 
 #see exactly how big the difference is
-as.vector(lth$gradient%*%del)-(lthdel$value-lth$value)
-as.vector(lth$hessian%*%del)-(lthdel$gradient-lth$gradient)
+#as.vector(lth$gradient%*%del)-(lthdel$value-lth$value)
+#as.vector(lth$hessian%*%del)-(lthdel$gradient-lth$gradient)
 
 #we know these differences are small when we compare it to the actual values
-lthdel$value-lth$value
-as.vector(lth$gradient%*%del)
-as.vector(lth$hessian%*%del)
-lthdel$gradient-lth$gradient
+# lthdel$value-lth$value
+# as.vector(lth$gradient%*%del)
+# as.vector(lth$hessian%*%del)
+# lthdel$gradient-lth$gradient
 
 ##########################################
 ##### to make sure that the objfun function is correct, compare it against the version without any C code. here is objfun without c:
@@ -260,5 +310,7 @@ function(nu,U,z.list,mu){
 
 #finally, compare objfun and objfunNOC for B+H example
 
-that<-objfunNOC(par=par, nbeta=1, nu.pql=nu.pql, umat=umat, u.star=u.pql, mod.mcml=mod.mcml, family.glmm=family.glmm,p1=p1,p2=p2,p3=p3, Sigmuh=Sigmuh,D.star=D.star, zeta=zeta)
+that<-objfunNOC(par=par, nbeta=1, nu.pql=vars$nu.pql, umat=umat, u.star=vars$u.star, mod.mcml=vars$mod.mcml, family.glmm=vars$family.glmm,p1=vars$p1,p2=vars$p2,p3=vars$p3, Sigmuh=Sigmuh,D.star=vars$D.star, zeta=vars$zeta)
 all.equal(that,lth)
+
+stopCluster(clust)

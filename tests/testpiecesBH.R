@@ -1,8 +1,8 @@
 library(glmm)
 data(BoothHobert)
+clust <- makeCluster(2)
 set.seed(1234)
-mod.mcml1<-glmm(y~0+x1,list(y~0+z1),varcomps.names=c("z1"), data=BoothHobert, family.glmm=bernoulli.glmm, m=21, doPQL=TRUE, debug=TRUE)
-
+mod.mcml1<-glmm(y~0+x1,list(y~0+z1),varcomps.names=c("z1"), data=BoothHobert, family.glmm=bernoulli.glmm, m=21, doPQL=TRUE, debug=TRUE, cluster=clust)
 mod.mcml<-mod.mcml1$mod.mcml
 z<-mod.mcml$z[[1]]
 x<-mod.mcml$x
@@ -118,14 +118,14 @@ that<-distRand(2,you,mod.mcml$z,u.pql)
 all.equal(this,that)
 
 #use finite diffs to make sure distRandCheck (and distRand) have correct derivs
-del<-10^(-8)
+del<-10^(-9)
 thisdel<-distRandCheck(2+del,you,u.pql)
 firstthing<-thisdel$value-this$value
 secondthing<-as.vector(this$gradient%*%del)
 all.equal(firstthing,secondthing)
-firstthing
-secondthing
-firstthing-secondthing
+#firstthing
+#secondthing
+#firstthing-secondthing
 
 #compare the gradient and hessian of the C functions by using these functions
 #(the value is checked in distRandGeneral)
@@ -168,28 +168,103 @@ all.equal(that$value,stuff)
 
 ############################################
 #want to check that the value of objfun is the same for a value of nu and beta
-m<-nrow(umat)
-dbb<-db<-b<-rep(0,m)
+vars <- new.env(parent = emptyenv())
+debug<-mod.mcml1$debug
+vars$m1 <- debug$m1
+m2 <- debug$m2
+m3 <- debug$m3
+vars$zeta <- 5
+vars$cl <- mod.mcml1$cluster
+registerDoParallel(vars$cl)                   #making cluster usable with foreach
+vars$no_cores <- length(vars$cl)
+vars$mod.mcml<-mod.mcml1$mod.mcml
+vars$nu.pql <- debug$nu.pql
+vars$umat<-debug$umat
+vars$newm <- nrow(vars$umat)
+vars$u.star<-debug$u.star
+D <- vars$D.star <- Dstarnotsparse<-2*diag(10)
+D.inv <- D.star.inv <-.5*diag(10)
+
+getEk<-glmm:::getEk
+addVecs<-glmm:::addVecs
+genRand<-glmm:::genRand
+
+vars$family.glmm<-mod.mcml1$family.glmm
+vars$ntrials<-1
+beta.pql <- debug$beta.pql
+
+simulate <- function(vars, Dstarnotsparse, m2, m3, beta.pql, D.star.inv){
+  #generate m1 from t(0,D*)
+  if(vars$m1>0) genData<-rmvt(ceiling(vars$m1/vars$no_cores),sigma=Dstarnotsparse,df=vars$zeta,type=c("shifted"))
+  if(vars$m1==0) genData<-NULL		
+  
+  #generate m2 from N(u*,D*)
+  if(m2>0) genData2<-genRand(vars$u.star,vars$D.star,ceiling(m2/vars$no_cores))
+  if(m2==0) genData2<-NULL
+  
+  
+  #generate m3 from N(u*,(Z'c''(Xbeta*+zu*)Z+D*^{-1})^-1)
+  if(m3>0){
+    Z=do.call(cbind,vars$mod.mcml$z)
+    eta.star<-as.vector(vars$mod.mcml$x%*%beta.pql+Z%*%vars$u.star)
+    if(vars$family.glmm$family.glmm=="bernoulli.glmm") {cdouble<-vars$family.glmm$cpp(eta.star)}
+    if(vars$family.glmm$family.glmm=="poisson.glmm"){cdouble<-vars$family.glmm$cpp(eta.star)}
+    if(vars$family.glmm$family.glmm=="binomial.glmm"){cdouble<-vars$family.glmm$cpp(eta.star, vars$ntrials)}
+    #still a vector
+    cdouble<-Diagonal(length(cdouble),cdouble)
+    Sigmuh.inv<- t(Z)%*%cdouble%*%Z+D.star.inv
+    Sigmuh<-solve(Sigmuh.inv)
+    genData3<-genRand(vars$u.star,Sigmuh,ceiling(m3/vars$no_cores))
+  }
+  if(m3==0) genData3<-NULL
+  
+  #	#these are from distribution based on data
+  #	if(distrib=="tee")genData<-genRand(sigma.gen,s.pql,mod.mcml$z,m1,distrib="tee",gamm)
+  #	if(distrib=="normal")genData<-genRand(sigma.pql,s.pql,mod.mcml$z,m1,distrib="normal",gamm)
+  #	#these are from standard normal
+  #	ones<-rep(1,length(sigma.pql))
+  #	zeros<-rep(0,length(s.pql))
+  #	genData2<-genRand(ones,zeros,mod.mcml$z,m2,distrib="normal",gamm)
+  
+  umat<-rbind(genData,genData2,genData3)
+  m <- nrow(umat)
+  list(umat=umat, m=m, Sigmuh.inv=Sigmuh.inv)
+}
+
+clusterSetRNGStream(vars$cl, 1234)
+
+clusterExport(vars$cl, c("vars", "Dstarnotsparse", "m2", "m3", "beta.pql", "D.star.inv", "simulate", "genRand"), envir = environment())     #installing variables on each core
+noprint <- clusterEvalQ(vars$cl, umatparams <- simulate(vars=vars, Dstarnotsparse=Dstarnotsparse, m2=m2, m3=m3, beta.pql=beta.pql, D.star.inv=D.star.inv))
+
+vars$nbeta <- 1
+vars$p1=vars$p2=vars$p3=1/3
+
+objfun<-glmm:::objfun
+
+umats <- clusterEvalQ(vars$cl, umatparams$umat)
+umat <- Reduce(rbind, umats)
+
+Sigmuh.invs <- clusterEvalQ(vars$cl, umatparams$Sigmuh.inv)
+Sigmuh.inv <- Sigmuh.invs[[1]]
+Sigmuh <- solve(Sigmuh.inv)
+
+dbb<-db<-b<-rep(0,vars$newm)
 sigsq<-nu<-2
 beta<-6
-Z<-mod.mcml$z[[1]]
-D.star.inv<-.5*diag(10)
+Z<-vars$mod.mcml$z[[1]]
 A<-sqrt(2)*diag(10)
-D<-2*diag(10)
-D.inv<-.5*diag(10)
+
 
 eta.star<-x*beta.pql+as.vector(Z%*%u.star)
 cdouble<-as.vector(bernoulli.glmm()$cpp(eta.star)) #still a vector
 cdouble<-diag(cdouble)
-Sigmuh.inv<- t(Z)%*%cdouble%*%Z+D.star.inv
-Sigmuh<-solve(Sigmuh.inv)
 
 piece3<-rep(0,3)
 
 #calculate objfun's value for comparison
 cache<-new.env(parent = emptyenv())
-objfun<-glmm:::objfun
-that<-objfun(c(beta,nu), nbeta=1, nu.pql=nu.pql, u.star=u.star, mod.mcml=mod.mcml, family.glmm=bernoulli.glmm,cache=cache,umat=umat, p1=1/3, p2=1/3, p3=1/3, m1=m1, D.star=D.star, Sigmuh=Sigmuh, Sigmuh.inv=Sigmuh.inv, zeta=5, ntrials=1)
+
+that<-objfun(c(beta,nu), cache=cache,vars=vars)
 
 #get t stuff ready
 tconstant<-glmm:::tconstant
@@ -204,7 +279,7 @@ tdist2<-function(tconst,u, Dstarinv,zeta,myq){
 
 #now go through row by row of umat 
 #ie go through each vector of gen rand eff
-for(k in 1:m){
+for(k in 1:vars$newm){
 	uvec<-umat[k,]
 	eta<-x*beta+as.vector(Z%*%uvec)
 
@@ -212,8 +287,8 @@ for(k in 1:m){
 	piece2<- distRandCheck(nu,uvec,rep(0,10))$value
 	
 	piece3[1]<-tdist2(tconst,uvec,D.star.inv,zeta,10)
-	piece3[2]<- distRandGeneral(uvec, u.star, D.star.inv)
-	piece3[3]<-distRandGeneral(uvec,u.star,Sigmuh.inv)
+	piece3[2]<- distRandGeneral(uvec, vars$u.star, D.star.inv)
+	piece3[3]<-distRandGeneral(uvec,vars$u.star,Sigmuh.inv)
 
 	damax<-max(piece3)
 	blah<-sum(exp(piece3-damax)/3)
@@ -228,6 +303,6 @@ all.equal(value,that$value)
 #Given generated random effects, the value of the objective function is correct.
 #This plus the test of finite diffs for objfun should be enough.
 
-
+stopCluster(clust)
 
 
