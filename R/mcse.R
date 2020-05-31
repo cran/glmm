@@ -11,9 +11,9 @@ mcvcov <- function(object){
 
 	x <- mod$x
 	y <- mod$y
-	Z=do.call(cbind,mod$z)
-	T<-length(mod$z)
-	nrand<-lapply(mod$z,ncol)
+	Z = do.call(cbind, mod$z)
+	Tee <-length(mod$z)
+	nrand<-lapply(mod$z, ncol)
 	nrandom<-unlist(nrand)
 
 
@@ -60,9 +60,9 @@ mcvcov <- function(object){
 	logdetDinvfornu<-sum(log(Dinvfornu))
 	Dinvfornu<-diag(Dinvfornu)
 	
-	meow<-rep(1,T+1)
+	meow<-rep(1,Tee+1)
 	meow[1]<-0
-	throwaway<-T+1
+	throwaway<-Tee+1
 	meow[2:throwaway]<-cumsum(nrandom)
 	
 	pea<-mod$pvec
@@ -72,9 +72,76 @@ mcvcov <- function(object){
 	npar <- length(beta) + length(nu)
 	squaretop <- rep(0,m)
 
-	
+	if(is.null(mod$weights)){
+	  wts <- rep(1,length(y))
+	} else{
+	  wts <- mod$weights
+	}
 
-	stuff<-.C(C_mcsec, as.double(0.0), as.double(0.0), as.double(squaretop), numsum=as.double(rep(0,npar^2)), as.double(mod$y),as.double(t(umat)), as.integer(myq), as.integer(m), as.double(mod$x), as.integer(n), as.integer(nbeta), as.double(beta), as.double(Z), as.double(Dinvfornu), as.double(logdetDinvfornu),as.integer(family_glmm), as.double(D.star.inv), as.double(logdet.D.star.inv), as.double(mod$u.pql), as.double(Sigmuh.inv), as.double(logdet.Sigmuh.inv), pea=as.double(pea), nps=as.integer(length(pea)), T=as.integer(T), nrandom=as.integer(nrandom), meow=as.integer(meow),nu=as.double(nu), zeta=as.integer(zeta),tconst=as.double(tconst), ntrials=as.integer(mod$mod.mcml$ntrials))
+	# only YOU can prevent segfault errors
+	# prevent segfault errors by checking dims
+	stopifnot(length(y) == n)
+	stopifnot(nrow(mod$x) == n)
+	stopifnot(ncol(mod$x) == nbeta)
+	stopifnot(length(beta) == nbeta)
+	stopifnot(nrow(Z) == n)
+	stopifnot(ncol(Z) == myq)
+	stopifnot(nrow(Dinvfornu) == myq)
+	stopifnot(ncol(Dinvfornu) == myq)
+	stopifnot(length(logdetDinvfornu) == 1)
+	stopifnot(length(family_glmm) == 1)
+	stopifnot(nrow(D.star.inv) == myq)
+	stopifnot(ncol(D.star.inv) == myq)
+	stopifnot(length(logdet.D.star.inv) == 1)
+    stopifnot(length(mod$u.pql) == myq)
+    stopifnot(nrow(Sigmuh.inv) == myq)
+    stopifnot(ncol(Sigmuh.inv) == myq)
+    stopifnot(length(logdet.Sigmuh.inv) == 1)
+    stopifnot(length(Tee) == 1)
+    stopifnot(length(nrandom) == Tee)
+    stopifnot(length(nrandom) == length(nu))
+    stopifnot(length(meow) == (Tee+1))
+    stopifnot(length(nu) == Tee)
+    stopifnot(length(zeta) == 1)
+    stopifnot(length(tconst) == 1)
+    stopifnot(length(mod$mod.mcml$ntrials) == n)
+    stopifnot(length(wts) == n)
+    
+	
+	stuff<-.C(C_mcsec, 
+	          as.double(0.0), # gamma: scalar
+	          as.double(0.0), # thing: scalar
+	          as.double(squaretop), # squaretop: vector length m
+	          numsum = as.double(rep(0, npar^2)), # numsum: vector of length  npar^2
+	          as.double(mod$y), # y: vector of length n
+	          as.double(t(umat)), # Umat: myq by m matrix.
+	          as.integer(myq), # scalar.
+	          as.integer(m), # scalar.
+	          as.double(mod$x), # n by nbeta matrix
+	          as.integer(n), #scalar
+	          as.integer(nbeta),  #scalar
+	          as.double(beta), # vector length nbeta
+	          as.double(Z), # n by myq matrix
+	          as.double(Dinvfornu), # myq x myq
+	          as.double(logdetDinvfornu), #scalar
+	          as.integer(family_glmm), #scalar
+	          as.double(D.star.inv), # myq x myq.
+	          as.double(logdet.D.star.inv),  #scalar
+	          as.double(mod$u.pql), # length = myq
+	          as.double(Sigmuh.inv),  # myq x myq.
+	          as.double(logdet.Sigmuh.inv), # scalar
+	          pea=as.double(pea), # vector of length nps
+	          nps=as.integer(length(pea)), #scalar
+	          Tee=as.integer(Tee), # scalar equal to the number of variance components
+	          nrandom=as.integer(nrandom), # vector of length T. 
+	          meow=as.integer(meow), # vector of length T+1.
+	          nu=as.double(nu), # vector of length T
+	          zeta=as.integer(zeta), #scalar
+	          tconst=as.double(tconst), #scalar.
+	          ntrials=as.integer(mod$mod.mcml$ntrials), #vector of length n
+	          as.double(0.0), # lfuval: scalar
+	          as.double(0.0), #  lfyuval: scalar
+	          wts=as.double(wts)) # vector length n. (to calculate weighted likelihood)
 
 	vhatnum <- (1/m)*stuff[[4]]
 	vhatdenom <- ( stuff[[1]]   )^2
@@ -82,7 +149,7 @@ mcvcov <- function(object){
 	vhatvec <- vhatnum/vhatdenom
 	Vhat <- matrix(vhatvec, nrow=npar)
 
-	Uhat <- mod$likelihood.hessian
+	Uhat <- mod$loglike.hessian
 	Uhatinv <- qr.solve(Uhat)
 
 	out <- Uhatinv %*% Vhat %*% Uhatinv/m

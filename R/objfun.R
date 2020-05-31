@@ -64,7 +64,58 @@ objfun <-
     
     #parallelizing the calculations for the value of the log-likelihood approximation and gradient
     clusterExport(vars$cl, c("vars"), envir = environment())     #installing variables on each core
-    out <- foreach(i=1:vars$no_cores) %dopar% {.C(C_valgrad, as.double(vars$mod.mcml$y),as.double(t(umatparams$umat)), as.integer(vars$myq), as.integer(umatparams$m), as.double(vars$mod.mcml$x), as.integer(vars$n), as.integer(vars$nbeta), as.double(vars$beta), as.double(vars$Z), as.double(vars$Dinvfornu), as.double(vars$logdetDinvfornu),as.integer(vars$family_glmm), as.double(vars$D.star.inv), as.double(vars$logdet.D.star.inv), as.double(vars$u.star), as.double(umatparams$Sigmuh.inv), as.double(logdet.Sigmuh.inv), pea=as.double(vars$pea), nps=as.integer(length(vars$pea)), T=as.integer(vars$T), nrandom=as.integer(vars$nrandom), meow=as.integer(vars$meow),nu=as.double(vars$nu), zeta=as.integer(vars$zeta),tconst=as.double(vars$tconst), v=double(umatparams$m), ntrials=as.integer(vars$ntrials), value=double(1),gradient=double(length(vars$par)), b=double(umatparams$m))}
+    out <- foreach(i=1:vars$no_cores) %dopar% {
+        # y is vector of length n
+        stopifnot(length(vars$mod.mcml$y) == vars$n)
+        # Umat is myq by m matrix, the R matrix transposed
+        stopifnot(nrow(t(umatparams$umat)) == vars$myq)
+        stopifnot(ncol(t(umatparams$umat)) == umatparams$m)
+        # x is n by nbeta matrix
+        stopifnot(nrow(vars$mod.mcml$x) == vars$n)
+        stopifnot(ncol(vars$mod.mcml$x) == vars$nbeta)
+        # beta is vector of length nbeta
+        stopifnot(length(vars$beta) == vars$nbeta)
+        # z is n by myq matrix
+        stopifnot(nrow(vars$Z) == vars$n)
+        stopifnot(ncol(vars$Z) == vars$myq)
+        # Dinvfornu is myq x myq
+        stopifnot(nrow(vars$Dinvfornu) == vars$myq)
+        stopifnot(ncol(vars$Dinvfornu) == vars$myq)
+        # logdetDinvfornu is scalar
+        stopifnot(length(vars$logdetDinvfornu) == 1)
+        .C(C_valgrad,
+            y = as.double(vars$mod.mcml$y),
+            Umat = as.double(t(umatparams$umat)),
+            myq = as.integer(vars$myq),
+            m = as.integer(umatparams$m),
+            x = as.double(vars$mod.mcml$x),
+            n = as.integer(vars$n),
+            nbeta = as.integer(vars$nbeta),
+            beta = as.double(vars$beta),
+            z = as.double(vars$Z),
+            Dinvfornu = as.double(vars$Dinvfornu),
+            logdetDinvfornu = as.double(vars$logdetDinvfornu),
+            family_glmm = as.integer(vars$family_glmm),
+            Dstarinv = as.double(vars$D.star.inv),
+            logdetDstarinv = as.double(vars$logdet.D.star.inv),
+            ustar = as.double(vars$u.star),
+            Sigmuhinv = as.double(umatparams$Sigmuh.inv),
+            logdetSigmuhinv = as.double(logdet.Sigmuh.inv),
+            pee = as.double(vars$pea),
+            nps = as.integer(length(vars$pea)),
+            T = as.integer(vars$T),
+            nrandom = as.integer(vars$nrandom),
+            meow = as.integer(vars$meow),
+            nu = as.double(vars$nu),
+            zeta = as.integer(vars$zeta),
+            tconst = as.double(vars$tconst),
+            v = double(umatparams$m),
+            ntrials = as.integer(vars$ntrials),
+            value = double(1),
+            gradient = double(length(vars$par)),
+            b = double(umatparams$m),
+            wts = as.double(vars$wts))
+    }
     #foreach runs loop in parallel, dopar operator sends each chunk of umat to seperate core and runs the .C function
     
     #combining the b's from each core into one vector
@@ -105,7 +156,7 @@ objfun <-
     
     #parallelizing calculations for the hessian
     clusterExport(vars$cl, c("vars"), envir = environment())
-    out2 <- foreach(i=1:vars$no_cores) %dopar% {.C(C_hess, as.double(vars$mod.mcml$y),as.double(t(umatparams$umat)), as.integer(vars$myq), as.integer(umatparams$m), as.double(vars$mod.mcml$x), as.integer(vars$n), as.integer(vars$nbeta), as.double(vars$beta), as.double(vars$Z), as.double(vars$Dinvfornu), as.double(vars$logdetDinvfornu),as.integer(vars$family_glmm), as.double(vars$D.star.inv), as.double(vars$logdet.D.star.inv), as.double(vars$u.star), as.double(umatparams$Sigmuh.inv), as.double(logdet.Sigmuh.inv), pea=as.double(vars$pea), nps=as.integer(length(vars$pea)), T=as.integer(vars$T), nrandom=as.integer(vars$nrandom), meow=as.integer(vars$meow),nu=as.double(vars$nu), zeta=as.integer(vars$zeta),tconst=as.double(vars$tconst), v=double(umatparams$m), ntrials=as.integer(vars$ntrials),gradient=as.double(vars$gradient),hessian=double((length(vars$par))^2), b=as.double(vars$b), length=as.integer(vars$newm), q=as.double(vars$bs[[i]]))}
+    out2 <- foreach(i=1:vars$no_cores) %dopar% {.C(C_hess, as.double(vars$mod.mcml$y),as.double(t(umatparams$umat)), as.integer(vars$myq), as.integer(umatparams$m), as.double(vars$mod.mcml$x), as.integer(vars$n), as.integer(vars$nbeta), as.double(vars$beta), as.double(vars$Z), as.double(vars$Dinvfornu), as.double(vars$logdetDinvfornu),as.integer(vars$family_glmm), as.double(vars$D.star.inv), as.double(vars$logdet.D.star.inv), as.double(vars$u.star), as.double(umatparams$Sigmuh.inv), as.double(logdet.Sigmuh.inv), pea=as.double(vars$pea), nps=as.integer(length(vars$pea)), T=as.integer(vars$T), nrandom=as.integer(vars$nrandom), meow=as.integer(vars$meow),nu=as.double(vars$nu), zeta=as.integer(vars$zeta),tconst=as.double(vars$tconst), v=double(umatparams$m), ntrials=as.integer(vars$ntrials),gradient=as.double(vars$gradient),hessian=double((length(vars$par))^2), b=as.double(vars$b), length=as.integer(vars$newm), q=as.double(vars$bs[[i]]), wts=as.double(vars$wts))}
     
     #adding hessian components
     hessian <- c(rep(0, length(out2[[1]]$hessian)))

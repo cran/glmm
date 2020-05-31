@@ -1,5 +1,6 @@
 \name{se}
 \alias{se}
+\concept{generalized linear mixed model}
 
 \title{Standard Error}
 \description{A function that calculates the standard error for the Monte Carlo maximum likelihood estimates returned from \code{\link{glmm}}.
@@ -31,14 +32,13 @@
 }
 \examples{
 library(glmm)
+data(BoothHobert)
 set.seed(1234)
-data(salamander)
-m<-1000
-\donttest{sal<-glmm(Mate~0+Cross,random=list(~0+Female,~0+Male),varcomps.names=c("F","M"),} 
-\donttest{data=salamander,family.glmm=bernoulli.glmm,m=m,debug=TRUE, cores=2)}
-\donttest{se(sal)}
+mod <- glmm(y~0+x1, list(y~0+z1), varcomps.names=c("z1"), 
+data=BoothHobert, family.glmm=bernoulli.glmm, m=100, doPQL=TRUE)
+
+se(mod)
 
 
 }
-
-\keyword{generalized linear mixed model}
+\keyword{models}

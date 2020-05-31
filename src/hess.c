@@ -1,24 +1,50 @@
 #include "myheader.h"
-/*x is n by nbeta matrix
- beta has length nbeta
- Umat is myq by m matrix, one COLUMN of Umat used at a time. Umat must be the R mat transposed
- z is n by myq matrix
- pee is the vector of sampling proportions (usually 1/3, 1/3, 1/3)
- nps is the length of pee (3 for now, maybe more if imp sampling distrib changes)
- ntrials is a vec of ints with length equal to length(y)
- */
+/*
+ y: vector of length n
+ Umat: myq by m matrix, one COLUMN of Umat used at a time. Umat must be the R mat transposed
+ myq: total number of random effects (q). scalar. 120 for salamanders.
+ m: Monte Carlo sample size. scalar.		 
+ x: n by nbeta matrix
+ n: sample size. scalar. 
+ nbeta: scalar equal to the dim of beta (number of fixed effects)
+ beta: vector of length nbeta
+ z:  n by myq matrix
+ Dinvfornu: square, symmetric matrix. myq x myq. D is variance matrix.
+ logdetDinvfornu: scalar equal to the log determinant for D's inverse
+ family_glmm:  int scalar
+ Dstarinv: square, symmetric matrix. myq x myq. Dstar is variance matrix from PQL.
+ logdetDstarinv: scalar equal to the log determinant for Dstar's inverse
+ ustar: vector containing PQL predictions for random effects. length = myq.
+ Sigmuhinv: variance matrix for normal used in importance sampling dist. myq x myq.
+ logdetSigmuhinv: scalar. 
+ pee: vector of sampling proportions (usually 1/3, 1/3, 1/3)
+ nps: scalar equal to the length of pee (3 for now, maybe more if imp sampling distrib changes)
+ T: scalar equal to the number of variance components
+ nrandom: vector of length T. each entry equals number of random effects associated with that variance component. For salamanders, 60 F and 60 M so nrandom is vec of length 2 (60, 60)
+ meow: vector of ints. length T+1. tells us which random effects go with each variance.
+ nu: vector of length T. equals the variance components.
+ zeta: int equal to the df for the t distrib. (p 13 of design doc)
+ tconst: scalar. (p13 of design doc, equation 59)
+ v: vector of length n. normalized importance sampling weights
+ ntrials:  a vec of ints with length n
+ gradient: vector equal to the first deriv of the MC log likelihood (length nbeta + T)
+ b: vector of length m. unnormalized importance sampling weights
+ wts: weights for the observations (to calculate weighted likelihood)
 
+ */
 // value can go?
 
 // Charlie: shut warnings about unused parameters only way CRAN allows
 #if defined(__GNUC__) || defined(__clang__)
-void hess(double *y, double *Umat, int *myq, int *m, double *x, int *n, int *nbeta, double *beta, double *z, double *Dinvfornu __attribute__ ((unused)), double *logdetDinvfornu __attribute__ ((unused)), int *family_glmm, double *Dstarinv __attribute__ ((unused)), double *logdetDstarinv __attribute__ ((unused)), double *ustar __attribute__ ((unused)), double *Sigmuhinv __attribute__ ((unused)), double *logdetSigmuhinv __attribute__ ((unused)), double *pee __attribute__ ((unused)), int *nps __attribute__ ((unused)), int *T, int *nrandom, int *meow, double *nu, int *zeta __attribute__ ((unused)), double *tconst __attribute__ ((unused)), double *v, int *ntrials, double *gradient, double *hessian, double *b, int *length, double *q)
+void hess(double *y, double *Umat, int *myq, int *m, double *x, int *n, int *nbeta, double *beta, double *z, double *Dinvfornu __attribute__ ((unused)), double *logdetDinvfornu __attribute__ ((unused)), int *family_glmm, double *Dstarinv __attribute__ ((unused)), double *logdetDstarinv __attribute__ ((unused)), double *ustar __attribute__ ((unused)), double *Sigmuhinv __attribute__ ((unused)), double *logdetSigmuhinv __attribute__ ((unused)), double *pee __attribute__ ((unused)), int *nps __attribute__ ((unused)), int *T, int *nrandom, int *meow, double *nu, int *zeta __attribute__ ((unused)), double *tconst __attribute__ ((unused)), double *v, int *ntrials, double *gradient, double *hessian, double *b, int *length, double *q, double *wts)
 #else
-void hess(double *y, double *Umat, int *myq, int *m, double *x, int *n, int *nbeta, double *beta, double *z, double *Dinvfornu, double *logdetDinvfornu, int *family_glmm, double *Dstarinv, double *logdetDstarinv, double *ustar, double *Sigmuhinv, double *logdetSigmuhinv, double *pee, int *nps, int *T, int *nrandom, int *meow, double *nu, int *zeta, double *tconst, double *v, int *ntrials, double *gradient, double *hessian, double *b, int *length, double *q)
+void hess(double *y, double *Umat, int *myq, int *m, double *x, int *n, int *nbeta, double *beta, double *z, double *Dinvfornu, double *logdetDinvfornu, int *family_glmm, double *Dstarinv, double *logdetDstarinv, double *ustar, double *Sigmuhinv, double *logdetSigmuhinv, double *pee, int *nps, int *T, int *nrandom, int *meow, double *nu, int *zeta, double *tconst, double *v, int *ntrials, double *gradient, double *hessian, double *b, int *length, double *q, double *wts)
 #endif /* defined(__GNUC__) || defined(__clang__) */
 {
     double *Uk = Calloc(*myq, double);
-    int Uindex = 0;
+    // clang static analyzer complains about the following
+    // put the int on the assignment below that ignores this one
+    // int Uindex = 0;
     
     /* Calculate xbeta, needed to calculate eta for each Uk=U[k,] in R notation */
     double *xbeta = Calloc(*n,double);
@@ -69,7 +95,7 @@ void hess(double *y, double *Umat, int *myq, int *m, double *x, int *n, int *nbe
     double *panda = Calloc(npar*npar, double);
     double *pandatemp = Calloc(npar*npar, double);
     
-    Uindex = 0;
+    int Uindex = 0;
     int Gindex = 0;
     int intone = 1;
     
@@ -104,7 +130,7 @@ void hess(double *y, double *Umat, int *myq, int *m, double *x, int *n, int *nbe
         distRand3C(nu, qzeros, T, nrandom, meow, Uk, lfugradient, lfuhess);
         
         /* calculate gradient and hessian log f_theta(y|u_k) */
-        elGH(y, x, n, nbeta, eta, family_glmm, ntrials, lfyugradient, lfyuhess);
+        elGH(y, x, n, nbeta, eta, family_glmm, ntrials, wts, lfyugradient, lfyuhess);
         
         /* Calculate hessian. 2 parts: panda, lobster.
          Panda is \sum_{k=1}^m pandabit1 times pandabit2 where
@@ -177,7 +203,10 @@ void hess(double *y, double *Umat, int *myq, int *m, double *x, int *n, int *nbe
     
     Free(panda);
     Free(lobster);
-    
+
+    // caught by ../../devel/calloc-match.R
+    Free(bs);
+
 }
 
 
