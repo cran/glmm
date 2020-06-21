@@ -2,8 +2,8 @@ Package: glmm
 Type: Package
 Title: Generalized Linear Mixed Models via Monte Carlo Likelihood
         Approximation
-Version: 1.4
-Date: 2020-5-24
+Version: 1.4.2
+Date: 2020-6-20
 Authors@R: c(person("Christina", "Knudson", role = c("aut", "cre"),
     email = "knud8583@stthomas.edu"), person("Charles J.", "Geyer", role = "ctb",
     email = "geyer@umn.edu"), person("Sydney", "Benson", role = "ctb", email = "bens0643@umn.edu"))
@@ -16,9 +16,9 @@ ByteCompile: TRUE
 NeedsCompilation: yes
 Suggests: knitr
 RoxygenNote: 7.0.2
-Packaged: 2020-05-24 20:40:44 UTC; admin
+Packaged: 2020-06-20 19:36:57 UTC; admin
 Author: Christina Knudson [aut, cre],
   Charles J. Geyer [ctb],
   Sydney Benson [ctb]
 Repository: CRAN
-Date/Publication: 2020-05-31 10:30:02 UTC
+Date/Publication: 2020-06-21 13:40:02 UTC

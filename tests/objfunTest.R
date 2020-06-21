@@ -13,7 +13,7 @@ vars$family.glmm<-out$family.glmm
 vars$umat<-debug$umat
 vars$newm <- nrow(vars$umat)
 vars$u.star<-debug$u.star
-vars$ntrials<-1
+vars$ntrials<- rep(1, length(out$y))
 D.star.inv <- Dstarnotsparse <- vars$D.star <- as.matrix(debug$D.star)
 
 
@@ -227,16 +227,17 @@ elR <-
 function(Y,X,eta,family.mcml){
 	family.mcml<-getFamily(family.mcml)
 	neta<-length(eta)
+	ntrials <- rep(1, neta)
 
 	if(family.mcml$family.glmm=="bernoulli.glmm"){
-		foo<-.C(glmm:::C_cum3,eta=as.double(eta),neta=as.integer(neta),type=as.integer(1),ntrials=as.integer(1),wts=as.double(wts),cumout=double(1))$cumout
-		mu<-.C(glmm:::C_cp3,eta=as.double(eta),neta=as.integer(neta),type=as.integer(1),ntrials=as.integer(1),cpout=double(neta))$cpout
-		cdub<-.C(glmm:::C_cpp3,eta=as.double(eta),neta=as.integer(neta),type=as.integer(1),ntrials=as.integer(1),cppout=double(neta))$cppout
+		foo<-.C(glmm:::C_cum3,eta=as.double(eta),neta=as.integer(neta),type=as.integer(1),ntrials=as.integer(ntrials),wts=as.double(wts),cumout=double(1))$cumout
+		mu<-.C(glmm:::C_cp3,eta=as.double(eta),neta=as.integer(neta),type=as.integer(1),ntrials=as.integer(ntrials),cpout=double(neta))$cpout
+		cdub<-.C(glmm:::C_cpp3,eta=as.double(eta),neta=as.integer(neta),type=as.integer(1),ntrials=as.integer(ntrials),cppout=double(neta))$cppout
 	}
 	if(family.mcml$family.glmm=="poisson.glmm"){
-		foo<-.C(glmm:::C_cum3,eta=as.double(eta),neta=as.integer(neta),type=as.integer(2),ntrials=as.integer(1),wts=as.double(wts),cumout=double(1))$cumout
-		mu<-.C(glmm:::C_cp3,eta=as.double(eta),neta=as.integer(neta),type=as.integer(2),ntrials=as.integer(1),cpout=double(neta))$cpout
-		cdub<-.C(glmm:::C_cpp3,eta=as.double(eta),neta=as.integer(neta),type=as.integer(2),ntrials=as.integer(1),cppout=double(neta))$cppout
+		foo<-.C(glmm:::C_cum3,eta=as.double(eta),neta=as.integer(neta),type=as.integer(2),ntrials=as.integer(ntrials),wts=as.double(wts),cumout=double(1))$cumout
+		mu<-.C(glmm:::C_cp3,eta=as.double(eta),neta=as.integer(neta),type=as.integer(2),ntrials=as.integer(ntrials),cpout=double(neta))$cpout
+		cdub<-.C(glmm:::C_cpp3,eta=as.double(eta),neta=as.integer(neta),type=as.integer(2),ntrials=as.integer(ntrials),cppout=double(neta))$cppout
 	}
 
 	value<-as.numeric(Y%*%eta-foo)
