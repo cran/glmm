@@ -1,4 +1,4 @@
-caa1489be7a296b6d7b2a3622fefc49c *DESCRIPTION
+b3d245d01298d40ecc4d956bde68b2fa *DESCRIPTION
 61343ad66bd4f26c384eb8d679ce3c5d *NAMESPACE
 5f42b85cbbb1637ecda6f0c3b7df6def *R/addMats.R
 747f566ddef73ffe1b35f52af02c04ee *R/distRand.R
@@ -10,8 +10,8 @@ d802c263b382d90c7c55d9adb519465c *R/getEk.R
 b55736f00a3b9be58f48fd885d6b27e6 *R/objfun.R
 106ffcfc835acbdc3dc15ef255871bbe *R/pql.R
 0cae884c2daded5baae3ec508ea2894f *R/summary.mcla.R
-7751a053d822e4572102fd0885949bda *build/partial.rdb
-d28c010a3f8744d10341d98b65b054bc *build/vignette.rds
+0c6ad5b3446721162c89589e8077ab1c *build/partial.rdb
+14e2b2ce8012a89507e6046f9a732be0 *build/vignette.rds
 cf1b3ede6bc3f19a75eec3b9d99ea2db *data/Booth2.rda
 11b203e170cce0ba762e4e200df1f545 *data/BoothHobert.rda
 4cdb0f725d20648a8016faab9dc88d9e *data/bacteria.rda
@@ -20,7 +20,7 @@ cf1b3ede6bc3f19a75eec3b9d99ea2db *data/Booth2.rda
 f8df7f1cd8146a568b304cb498aea68f *data/radish2.rda
 e132064943668919c2812b69578f0e8a *data/salamander.rda
 8fb5acb040e212dcbc2441f40a18e525 *inst/doc/vignettes.Rnw
-97192e069a80eda59c23cd7fc919d3ce *inst/doc/vignettes.pdf
+17afdb63fe9a2d27f02e03e7f56f7bcc *inst/doc/vignettes.pdf
 5dfd709c364188de52a3b9a4a48ead07 *man/Booth2.Rd
 8565fb6554ada4984741a4425c503db7 *man/BoothHobert.Rd
 fbab645d55a4b6579d20687a631ab61f *man/bacteria.Rd
@@ -58,7 +58,6 @@ b200d3b2e9a49881f6267a3a7690b1fd *src/mcse.c
 ab94fc706abec681c86a64bfcb3123ce *src/myheader.h
 f6495498e4217dc5fe33af2409242d24 *src/t.c
 e52abb3eb2130c2365d7528c699a7033 *src/valgrad.c
-7ceea21badf09a0e4e832cc88b2bd105 *tests/--valgrind
 bf3aa77bb6f0205b1ab76e3332d151ab *tests/BinBerTest.R
 f9b2584e853eb646f21b67af5990c6f3 *tests/BinBerTest.Rout.save
 5c8110e79c2376d8acf06796a89f78d8 *tests/binomfamtest.R

@@ -2,12 +2,12 @@ Package: glmm
 Type: Package
 Title: Generalized Linear Mixed Models via Monte Carlo Likelihood
         Approximation
-Version: 1.4.3
-Date: 2022-4-05
+Version: 1.4.4
+Date: 2022-10-6
 Authors@R: c(person("Christina", "Knudson", role = c("aut", "cre"),
-    email = "knud8583@stthomas.edu"), person("Charles J.", "Geyer", role = "ctb",
+    email = "drchristinaknudson@gmail.com"), person("Charles J.", "Geyer", role = "ctb",
     email = "geyer@umn.edu"), person("Sydney", "Benson", role = "ctb", email = "bens0643@umn.edu"))
-Maintainer: Christina Knudson <knud8583@stthomas.edu>
+Maintainer: Christina Knudson <drchristinaknudson@gmail.com>
 Description: Approximates the likelihood of a generalized linear mixed model using Monte Carlo likelihood approximation. Then maximizes the likelihood approximation to return maximum likelihood estimates, observed Fisher information, and other model information.
 License: GPL-2
 Depends: R (>= 4.0), trust, mvtnorm, Matrix, parallel, doParallel
@@ -17,9 +17,9 @@ NeedsCompilation: yes
 Suggests: knitr
 RoxygenNote: 7.0.2
 VignetteBuilder: knitr
-Packaged: 2022-04-05 20:10:46 UTC; admin
+Packaged: 2022-10-07 19:54:20 UTC; christina.knudson
 Author: Christina Knudson [aut, cre],
   Charles J. Geyer [ctb],
   Sydney Benson [ctb]
 Repository: CRAN
-Date/Publication: 2022-04-07 07:42:36 UTC
+Date/Publication: 2022-10-09 20:00:02 UTC
